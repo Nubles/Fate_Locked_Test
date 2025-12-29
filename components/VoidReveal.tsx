@@ -52,7 +52,9 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
   const [imageError, setImageError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [rouletteIndex, setRouletteIndex] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 1. Create a ref for the modal container
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const rouletteIcons = [
       { icon: Shield, color: 'text-gray-400' },
@@ -69,6 +71,7 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
       { icon: Footprints, color: 'text-blue-300' }
   ];
 
+  // Animation Sequence Logic
   useEffect(() => {
     if (!animationsEnabled) {
         setPhase('reveal');
@@ -109,59 +112,62 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
     }
   }, [isChaos, animationsEnabled]);
 
-  // Focus Trap Logic
+  // Focus Trap Logic (Crash-Proof Version)
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-
-      const container = containerRef.current;
-      if (!container) return;
-
-      const focusableElements = container.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-
-      if (focusableElements.length === 0) {
-          e.preventDefault();
-          return;
-      }
-
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-      if (e.shiftKey) {
-        if (document.activeElement === firstElement) {
-          lastElement.focus();
-          e.preventDefault();
-        }
-      } else {
-        if (document.activeElement === lastElement) {
-          firstElement.focus();
-          e.preventDefault();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    // Initial focus on mount or phase change
-    const container = containerRef.current;
-    if (container) {
-        // We defer slightly to allow render to complete if elements are conditional
-        setTimeout(() => {
-            const focusable = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            if (focusable.length > 0) {
-                (focusable[0] as HTMLElement).focus();
-            } else {
-                container.focus();
-            }
-        }, 50);
+    // 2. Focus the modal wrapper immediately when it opens
+    if (modalRef.current) {
+        modalRef.current.focus();
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // Close on Escape
+        if (e.key === 'Escape') {
+            onComplete();
+            return;
+        }
+
+        // Trap Focus Logic
+        if (e.key === 'Tab') {
+            if (!modalRef.current) return;
+
+            // Find all focusable elements inside the modal
+            const focusableElements = modalRef.current.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+
+            if (focusableElements.length === 0) {
+                e.preventDefault();
+                return;
+            }
+
+            const firstElement = focusableElements[0] as HTMLElement;
+            const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+            // If Shift + Tab (backward) and on first element, move to last
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement?.focus();
+                }
+            }
+            // If Tab (forward) and on last element, move to first
+            else {
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement?.focus();
+                }
+            }
+        }
+    };
+
+    // 3. Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // 4. CLEANUP: Vital to prevent crashes when component unmounts
     return () => {
         document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [phase]);
+  }, [onComplete]);
 
   const handleCopyFlex = () => {
       const text = `🔥 Fate-Locked UIM Update 🔥\nJust unlocked: **${itemName}** (${itemType})!\n#OSRS #FateLocked`;
@@ -316,7 +322,7 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
 
   return (
     <div
-        ref={containerRef}
+        ref={modalRef}
         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md overflow-y-auto outline-none"
         tabIndex={-1}
         role="dialog"
