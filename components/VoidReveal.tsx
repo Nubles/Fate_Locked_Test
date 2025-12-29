@@ -1,6 +1,4 @@
-
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Sparkles, Map, Box, Copy, Shield, BookOpen, Footprints, Zap, Home, Store, Gamepad2, Skull, Package, Dna, ExternalLink, Flag } from 'lucide-react';
 import { WIKI_OVERRIDES } from '../constants';
 
@@ -24,7 +22,7 @@ const getWikiUrl = (name: string) => {
 
 const getItemDescription = (type: string, name: string): string => {
     const t = type.toLowerCase();
-
+    
     // New specific checks
     if (name === 'Bedroom (Servant)') return "You may now hire Servants (Demon Butler) to speed up Construction training.";
     if (name === 'Servant\'s Moneybag') return "You may now pay your servant directly from the coffer.";
@@ -53,6 +51,7 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
   const [imageError, setImageError] = useState(false);
   const [copied, setCopied] = useState(false);
   const [rouletteIndex, setRouletteIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const rouletteIcons = [
       { icon: Shield, color: 'text-gray-400' },
@@ -68,6 +67,13 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
       { icon: Flag, color: 'text-teal-400' },
       { icon: Footprints, color: 'text-blue-300' }
   ];
+
+  useEffect(() => {
+    // Focus the container on mount to capture keyboard events (prevent spacebar hitting buttons behind modal)
+    if (containerRef.current) {
+        containerRef.current.focus();
+    }
+  }, []);
 
   useEffect(() => {
     if (!animationsEnabled) {
@@ -261,8 +267,12 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
   const description = getItemDescription(itemType, itemName);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md overflow-y-auto">
-
+    <div 
+        ref={containerRef}
+        tabIndex={-1}
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md overflow-y-auto outline-none"
+    >
+      
       {/* PHASE: CHAOS ROULETTE */}
       {phase === 'roulette' && (
           <div className="relative flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300 m-auto">
@@ -274,7 +284,7 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
               <div className="relative z-10 w-48 h-48 bg-black/80 rounded-full border-4 border-red-500 shadow-[0_0_60px_rgba(239,68,68,0.6)] flex items-center justify-center overflow-hidden animate-shake">
                   {/* Spinning Ring */}
                   <div className="absolute inset-0 border-t-4 border-r-2 border-red-400/50 rounded-full animate-[spin_0.5s_linear_infinite]"></div>
-
+                  
                   {/* The Icon */}
                   <div className="relative z-10 transform scale-125 transition-all duration-75">
                       <RouletteIcon size={64} className={`${rouletteIcons[rouletteIndex].color} drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]`} />
@@ -299,7 +309,7 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
       {/* PHASE 1 & 2: THE BLACK HOLE (Standard Mode) */}
       {(phase === 'imploding' || phase === 'singularity') && (
         <div className={`relative flex items-center justify-center transition-all duration-700 ease-in-out m-auto ${phase === 'singularity' ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}>
-
+          
           {/* Ambient Glow */}
           <div className={`absolute w-[600px] h-[600px] rounded-full bg-gradient-to-r ${theme.bgGradient} blur-[100px] opacity-20 animate-pulse`} />
 
@@ -317,27 +327,27 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
 
           {/* The Void / Event Horizon */}
           <div className={`relative w-40 h-40 bg-black rounded-full ${theme.shadow} flex items-center justify-center overflow-hidden z-10 ${phase === 'singularity' ? 'animate-shake' : ''}`}>
-
+             
              {/* Swirling Interior (Conic Gradient) */}
-             <div
+             <div 
                className="absolute inset-[-50%] opacity-30 animate-[spin_3s_linear_infinite]"
                style={{ background: `conic-gradient(from 0deg, transparent 0%, ${theme.hex} 100%)` }}
              />
-
+             
              {/* The Singularity (Pure Black Center) */}
              <div className="absolute inset-2 bg-black rounded-full z-20 flex items-center justify-center">
                 {/* Inner Pulse */}
                 <div className={`w-full h-full rounded-full bg-gradient-to-tr ${theme.bgGradient} opacity-30 animate-pulse`} />
              </div>
           </div>
-
+          
           {/* Infalling Particles */}
           <div className="absolute inset-0 pointer-events-none">
              {[...Array(6)].map((_, i) => (
-                <div
+                <div 
                    key={i}
                    className={`absolute left-1/2 top-1/2 w-1 h-1 rounded-full ${theme.particle} animate-ping opacity-0`}
-                   style={{
+                   style={{ 
                        transform: `rotate(${i * 60}deg) translate(120px)`,
                        animationDuration: `${1 + Math.random()}s`,
                        animationDelay: `${Math.random() * 0.5}s`
@@ -361,12 +371,12 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
       {/* PHASE 4: THE REVEAL */}
       {phase === 'reveal' && (
         <div className={`relative z-[120] flex flex-col items-center ${animationsEnabled ? 'animate-float-up' : ''} m-auto p-4`}>
-
+          
           {/* God Rays Background */}
           {animationsEnabled && (
               <div className={`absolute -z-10 w-[600px] h-[600px] bg-gradient-to-t ${theme.bgGradient} to-transparent rounded-full blur-3xl animate-pulse`} />
           )}
-
+          
           {/* The Card */}
           <div className={`relative bg-gradient-to-b from-gray-900 to-black border-2 border-gray-700 p-8 rounded-xl shadow-2xl text-center transition-all duration-300 ${isRegion ? 'max-w-6xl w-auto min-w-[340px]' : 'min-w-[340px] max-w-md'}`}>
             {/* Rarity Star */}
@@ -382,15 +392,15 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
               <h3 className={`${theme.text} text-sm font-bold uppercase tracking-widest drop-shadow-sm`}>
                   {isChaos ? 'CHAOS UNLOCK' : `${itemType} UNLOCKED`}
               </h3>
-
+              
               {itemImage && !imageError ? (
                  <div className="flex justify-center my-6 relative">
                     {animationsEnabled && (
                         <div className={`absolute inset-0 bg-gradient-to-t ${theme.bgGradient} blur-xl opacity-50 animate-pulse`}></div>
                     )}
-                    <img
-                        src={itemImage}
-                        alt={itemName}
+                    <img 
+                        src={itemImage} 
+                        alt={itemName} 
                         className={`${isRegion ? 'w-auto h-auto max-h-[70vh] max-w-full rounded-lg border border-white/10 shadow-2xl' : 'w-24 h-24'} object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] relative z-10`}
                         onError={() => setImageError(true)}
                     />
@@ -403,28 +413,28 @@ export const VoidReveal: React.FC<VoidRevealProps> = ({ itemName, itemType, item
                     </div>
                 </div>
               )}
-
+              
               <h2 className="text-3xl font-black text-white drop-shadow-md break-words leading-tight">{itemName}</h2>
               <p className="text-gray-400 text-xs italic mt-2 px-4 leading-relaxed border-t border-white/5 pt-2">{description}</p>
             </div>
 
             <div className="mt-8 pt-6 border-t border-gray-700 flex flex-col gap-3">
-               <button
+               <button 
                  onClick={onComplete}
                  className={`w-full px-8 py-3 ${theme.button} text-black font-black text-sm uppercase tracking-wider rounded shadow-lg transition-transform hover:scale-105 active:scale-95`}
                >
                  Accept Destiny
                </button>
-
+               
                <div className="flex gap-2 justify-center">
-                   <button
+                   <button 
                        onClick={handleCopyFlex}
                        className="flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-white transition-colors py-2 px-4 rounded hover:bg-white/5"
                    >
                        {copied ? <span className="text-green-400">Copied!</span> : <><Copy size={14} /> Copy Summary</>}
                    </button>
-
-                   <a
+                   
+                   <a 
                        href={getWikiUrl(itemName)}
                        target="_blank"
                        rel="noopener noreferrer"
