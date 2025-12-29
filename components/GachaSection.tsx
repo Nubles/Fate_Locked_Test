@@ -1,4 +1,3 @@
-
 // ... existing imports ...
 import React, { useState } from 'react';
 import { TableType } from '../types';
@@ -96,13 +95,13 @@ const SpendCard: React.FC<SpendCardProps> = ({
 
 export const GachaSection: React.FC = () => {
   const { keys, chaosKeys, unlocks, unlockContent, animationsEnabled } = useGame();
-  const [pendingReveal, setPendingReveal] = useState<{
-      item: string,
-      tableType: TableType,
-      image?: string,
-      isChaos: boolean,
-      costType: 'key'|'chaosKey',
-      cost: number
+  const [pendingReveal, setPendingReveal] = useState<{ 
+      item: string, 
+      tableType: TableType, 
+      image?: string, 
+      isChaos: boolean, 
+      costType: 'key'|'chaosKey', 
+      cost: number 
   } | null>(null);
 
   const canUnlock = checkUnlockAvailability(unlocks);
@@ -111,24 +110,25 @@ export const GachaSection: React.FC = () => {
   const getUnlockImage = (table: string, item: string) => {
     const baseUrl = 'https://oldschool.runescape.wiki/images/';
     if (UTILITY_ITEM_IDS[item]) return `https://chisel.weirdgloop.org/static/img/osrs-sprite/${UTILITY_ITEM_IDS[item]}.png`;
-
+    
     if (table === 'skill') return `${baseUrl}${item}_icon.png`;
     if (table === 'equipment') return SLOT_CONFIG[item] ? `${baseUrl}${SLOT_CONFIG[item].file}` : undefined;
     if (table === 'region') return REGION_ICONS[item] ? `${baseUrl}${REGION_ICONS[item]}` : `${baseUrl}Globe_icon.png`;
     return SPECIAL_ICONS[item] ? `${baseUrl}${SPECIAL_ICONS[item]}` : undefined;
   };
-
+  
   // List of tables that benefit from dynamic image fetching
   const WIKI_FETCH_TYPES = [
-      'region', 'boss', 'minigame', 'storage', 'guild',
+      'region', 'boss', 'minigame', 'storage', 'guild', 
       'mobility', 'housing', 'arcana', 'merchants'
   ];
 
   const handleUnlock = async (table: TableType) => {
+    if (pendingReveal) return; // Guard: Do not allow another roll while reveal is pending
     if (keys <= 0) return;
     const { pool, stateKey } = getPoolAndStateKey(table);
     const validPool = pool.filter(item => isValidUnlock(table, item, unlocks, keys));
-
+    
     if (validPool.length === 0) {
         if (table === TableType.SKILLS && keys < 2) {
             alert("You need 2 Keys to unlock higher skill tiers!");
@@ -152,6 +152,7 @@ export const GachaSection: React.FC = () => {
   };
 
   const handleChaosUnlock = () => {
+      if (pendingReveal) return; // Guard: Do not allow another roll while reveal is pending
       if (chaosKeys <= 0) return;
 
       // Build a global pool of all valid unlocks across all tables
@@ -180,7 +181,7 @@ export const GachaSection: React.FC = () => {
 
       // Pick a random item from the global pool
       const selection = globalPool[Math.floor(Math.random() * globalPool.length)];
-
+      
       let imageUrl = getUnlockImage(selection.stateKey, selection.item);
 
       // Async fetch for chaos unlock if no ID found
@@ -190,13 +191,13 @@ export const GachaSection: React.FC = () => {
           });
       }
 
-      setPendingReveal({
-          item: selection.item,
-          tableType: selection.tableType,
-          image: imageUrl,
-          isChaos: true,
-          costType: 'chaosKey',
-          cost: 1
+      setPendingReveal({ 
+          item: selection.item, 
+          tableType: selection.tableType, 
+          image: imageUrl, 
+          isChaos: true, 
+          costType: 'chaosKey', 
+          cost: 1 
       });
   };
 
@@ -209,13 +210,13 @@ export const GachaSection: React.FC = () => {
   return (
     <div className="h-full flex flex-col relative p-4">
       {pendingReveal && (
-          <VoidReveal
-             itemName={pendingReveal.item}
-             itemType={pendingReveal.tableType}
-             itemImage={pendingReveal.image}
-             onComplete={finalizeReveal}
-             isChaos={pendingReveal.isChaos}
-             animationsEnabled={animationsEnabled}
+          <VoidReveal 
+             itemName={pendingReveal.item} 
+             itemType={pendingReveal.tableType} 
+             itemImage={pendingReveal.image} 
+             onComplete={finalizeReveal} 
+             isChaos={pendingReveal.isChaos} 
+             animationsEnabled={animationsEnabled} 
           />
       )}
 
